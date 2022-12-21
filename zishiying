@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>ECharts</title>
+    <!-- 引入刚刚下载的 ECharts 文件 -->
+    <script src="js/echarts.js"></script>
+  </head>
+  <body>
+    <!-- 为 ECharts 准备一个定义了宽高的 DOM -->
+    <div id="main" style="width: 600px;height:400px;"></div>
+    <script type="text/javascript">
+      // 基于准备好的dom，初始化echarts实例
+      var myChart = echarts.init(document.getElementById('main'));
+
+      // 指定图表的配置项和数据
+      import React, { Component } from 'react';
+import auth from "../common/auth.jsx";
+import echarts from 'echarts';   
+import $ from "jquery";
+
+class ChartMsg extends Component {
+    constructor(props) {
+        super(props);
+
+        this.state = {
+            params: [],
+        };
+    }
+
+
+     fetchTop10(params = {}) {
+        auth.fetch('/message/getChartMsgTop10', params, (res) => {
+            this.setState({ loading: false });
+            if (res.result == "0") {
+               let datalist =  res.data.list;
+               let temptop10dataX =[];
+               let temptop10dataY =[];
+                for(let a=0 ; a<datalist.length;a++){
+                    temptop10dataX.push(datalist[a].id);
+                    temptop10dataY.push(datalist[a].num);
+                }
+                this.Top10chart(temptop10dataX,temptop10dataY);
+            } else {
+                message.error(res.msg, 3);
+            }
+
+        });
+    }
+
+   
+       
+    //echarts
+    Top10chart(temptop10dataX,temptop10dataY){
+        var dom1 = document.getElementById("top10");
+        
+       
+        //用于使chart自适应高度和宽度,通过窗体高宽计算容器高宽
+        var resizeWorldMapContainer1 = function () {
+            dom1.style.width = (window.innerWidth-250) +'px';
+            //dom.style.height = window.innerHeight+'px';
+        };
+        //设置容器高宽
+        resizeWorldMapContainer1();
+       
+        var myChart1 = echarts.init(dom1);
+        var option = {
+            title : {
+                text: '数量top10',
+                subtext: '数据来自最近7天数据',
+                x:'center'
+            },
+            tooltip: {
+                show: true,
+                trigger: 'axis',
+            },
+            
+            legend: {
+                show:false,
+                data:['数量top10'],
+                x:'left'
+            },
+            toolbox: {
+                show : true,
+                feature : {
+                    mark : {show: true},
+                    magicType: {show: true, type: ['line', 'bar']},
+                    restore : {show: true},
+                    saveAsImage : {show: true}
+                }
+            },
+            xAxis : [
+                {
+                    
+                    type : 'category',
+                    data : temptop10dataX,
+                    name : 'ID'
+                }
+            ],
+            yAxis : [
+                {
+                    type : 'value',
+                    name : '数量',
+                    axisLabel : {
+                        formatter: '{value} 条'
+                    }
+                }
+            ],
+            series : [
+                {
+                    "name":"数量top10",
+                    "type":"bar",
+                    "data": temptop10dataY,
+                     markLine : {
+                        data : [
+                            {type : 'average', name : '平均值'}
+                        ]
+                    }
+                }
+            ]
+        };
+        // 为echarts对象加载数据 
+        myChart1.setOption(option); 
+
+        window.onresize = function () {
+            //重置容器高宽
+            resizeWorldMapContainer1(400);
+             myChart1.resize();
+        };
+    
+
+    }
+
+
+
+    componentDidMount() { //初始化
+       
+        this.fetchTop10();
+       
+    }
+
+
+    render() {
+        return (
+            <div>
+                
+                 <br/>
+                <div id="top10" style={{ width: 800, height: 400 }}>
+
+                </div>
+                
+            </div>
+        );
+    }
+}
+
+
+export default ChartMsg;
